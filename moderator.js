@@ -99,6 +99,7 @@ onAuthStateChanged(auth, async (user) => {
   }
 
   try {
+    viewerId = user.uid;
     const meSnap = await getDoc(doc(db, 'users', user.uid));
     if (!meSnap.exists()) {
       showDenied('Профиль не найден.');
