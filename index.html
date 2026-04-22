@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MathClass — Вход</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="card">
+      <h1>Регистрация / Вход</h1>
+      <p class="hint">Введите почту и пароль</p>
+
+      <label for="email">Почта</label>
+      <input id="email" type="email" placeholder="example@mail.com" autocomplete="email" />
+
+      <label for="password">Пароль</label>
+      <input id="password" type="password" placeholder="••••••••" autocomplete="current-password" />
+
+      <div class="buttons-row">
+        <button id="registerBtn" type="button">Регистрация</button>
+        <button id="loginBtn" type="button" class="secondary">Вход</button>
+      </div>
+
+      <p id="status" class="status"></p>
+    </main>
+
+    <script type="module" src="index.js"></script>
+  </body>
+</html>
