@@ -118,3 +118,11 @@ button:disabled {
 .status.success {
   color: #138a1d;
 }
+
+.hidden {
+  display: none;
+}
+
+.force-visible {
+  display: block;
+}
