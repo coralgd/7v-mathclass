@@ -23,17 +23,18 @@
 
         <p id="elderStatus" class="status"></p>
 
-        <div class="lists-grid">
-          <section>
-            <h2>Неверифицированные</h2>
-            <ul id="unverifiedList" class="list"></ul>
-          </section>
-
-          <section>
-            <h2>Верифицированные</h2>
-            <ul id="verifiedList" class="list"></ul>
-          </section>
+        <div class="tab-row">
+          <button id="tabUnverified" class="tab-btn" type="button">Неверифицированные</button>
+          <button id="tabVerified" class="tab-btn ghost" type="button">Верифицированные</button>
         </div>
+
+        <section id="unverifiedSection">
+          <ul id="unverifiedList" class="list"></ul>
+        </section>
+
+        <section id="verifiedSection" class="hidden">
+          <ul id="verifiedList" class="list"></ul>
+        </section>
       </section>
 
       <section id="elderDeniedBlock" class="hidden">
