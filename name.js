@@ -12,20 +12,24 @@ const nameInput = document.getElementById('name');
 const submitBtn = document.getElementById('submitNameBtn');
 const statusEl = document.getElementById('status');
 
+let isSubmitted = false;
+
 const showStatus = (text, isError = false) => {
   statusEl.textContent = text;
   statusEl.className = `status ${isError ? 'error' : 'success'}`;
 };
 
 const lockSubmittedState = (name) => {
-  nameInput.value = name;
+  isSubmitted = true;
+  nameInput.value = name || 'Имя отправлено';
   nameInput.disabled = true;
   submitBtn.disabled = true;
   submitBtn.textContent = 'Отправлено, жди верификации';
-  showStatus('Имя уже отправлено, статус: не верифицирован.');
+  showStatus('Отправка уже выполнена. Ожидай верификацию.');
 };
 
 const unlockForm = () => {
+  isSubmitted = false;
   nameInput.disabled = false;
   submitBtn.disabled = false;
   submitBtn.textContent = 'Отправить';
@@ -33,10 +37,7 @@ const unlockForm = () => {
 
 const ensureUserDoc = async (userRef, userEmail) => {
   const snapshot = await getDoc(userRef);
-
-  if (snapshot.exists()) {
-    return;
-  }
+  if (snapshot.exists()) return;
 
   await setDoc(
     userRef,
@@ -70,14 +71,14 @@ onAuthStateChanged(auth, async (user) => {
     userRef,
     (snapshot) => {
       if (!snapshot.exists()) return;
-
       const data = snapshot.data();
+
       if (data.verified) {
         window.location.href = 'main.html';
         return;
       }
 
-      if (data.nameSubmitted && data.name) {
+      if (data.nameSubmitted || data.name) {
         lockSubmittedState(data.name);
       } else {
         unlockForm();
@@ -89,12 +90,16 @@ onAuthStateChanged(auth, async (user) => {
   );
 
   submitBtn.addEventListener('click', async () => {
-    const name = nameInput.value.trim();
+    if (isSubmitted) return;
 
+    const name = nameInput.value.trim();
     if (!name) {
       showStatus('Введи имя перед отправкой.', true);
       return;
     }
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Отправляем...';
 
     try {
       await setDoc(
@@ -111,6 +116,8 @@ onAuthStateChanged(auth, async (user) => {
       );
     } catch (error) {
       showStatus(error.message || 'Ошибка сохранения.', true);
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Отправить';
     }
   });
 });
