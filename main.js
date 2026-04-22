@@ -1,77 +1,64 @@
 import { auth, db, onAuthStateChanged, doc, onSnapshot } from './firebase.js';
 
-const verifiedSection = document.getElementById('verifiedSection');
-const blockedSection = document.getElementById('blockedSection');
-const welcomeText = document.getElementById('welcomeText');
+const allowedBlock = document.getElementById('allowedBlock');
+const blockedBlock = document.getElementById('blockedBlock');
+const welcome = document.getElementById('welcome');
+const checkModBtn = document.getElementById('checkModBtn');
+const modStatus = document.getElementById('modStatus');
 const goIndexBtn = document.getElementById('goIndexBtn');
-const checkModeratorBtn = document.getElementById('checkModeratorBtn');
-const goModeratorBtn = document.getElementById('goModeratorBtn');
-const moderatorStatus = document.getElementById('moderatorStatus');
 
-let currentRole = 'user';
+let role = 'user';
 
-const showVerified = (name) => {
-  verifiedSection.classList.remove('hidden');
-  blockedSection.classList.add('hidden');
-  welcomeText.textContent = name ? `Добро пожаловать, ${name}!` : 'Добро пожаловать!';
+const showAllowed = (name) => {
+  allowedBlock.classList.remove('hidden');
+  blockedBlock.classList.add('hidden');
+  welcome.textContent = name ? `Добро пожаловать, ${name}` : 'Добро пожаловать';
 };
 
 const showBlocked = () => {
-  verifiedSection.classList.add('hidden');
-  blockedSection.classList.remove('hidden');
+  allowedBlock.classList.add('hidden');
+  blockedBlock.classList.remove('hidden');
 };
 
-const hasModeratorRights = (role) => role === 'moderator' || role === 'senior_moderator';
-
-const setModeratorStatus = (text, isError = false) => {
-  moderatorStatus.textContent = text;
-  moderatorStatus.className = `status ${isError ? 'error' : 'success'}`;
+const showModStatus = (text, isError = false) => {
+  modStatus.textContent = text;
+  modStatus.className = `status ${isError ? 'error' : ''}`;
 };
+
+const isModerator = (value) => value === 'moderator' || value === 'senior_moderator';
 
 goIndexBtn.addEventListener('click', () => {
   window.location.href = 'index.html';
 });
 
-checkModeratorBtn.addEventListener('click', () => {
-  if (hasModeratorRights(currentRole)) {
-    goModeratorBtn.classList.remove('hidden');
-    setModeratorStatus('Права подтверждены. Можно перейти на страницу модератора.');
+checkModBtn.addEventListener('click', () => {
+  if (isModerator(role)) {
+    window.location.href = 'moderator.html';
   } else {
-    goModeratorBtn.classList.add('hidden');
-    setModeratorStatus('У вас нет прав модератора.', true);
+    showModStatus('У вас нет прав модератора.', true);
   }
 });
 
-goModeratorBtn.addEventListener('click', () => {
-  window.location.href = 'moderator.html';
-});
-
-onAuthStateChanged(auth, async (user) => {
+onAuthStateChanged(auth, (user) => {
   if (!user) {
     showBlocked();
     return;
   }
 
-  const userRef = doc(db, 'users', user.uid);
-
-  onSnapshot(
-    userRef,
-    (snapshot) => {
-      if (!snapshot.exists()) {
-        showBlocked();
-        return;
-      }
-
-      const data = snapshot.data();
-      currentRole = data.role || 'user';
-
-      if (data.verified) {
-        showVerified(data.name);
-        return;
-      }
-
+  onSnapshot(doc(db, 'users', user.uid), (snap) => {
+    if (!snap.exists()) {
       showBlocked();
-    },
-    () => showBlocked(),
-  );
+      return;
+    }
+
+    const data = snap.data();
+    role = data.role || 'user';
+
+    if (data.verified) {
+      showAllowed(data.name);
+      return;
+    }
+
+    showBlocked();
+  });
 });

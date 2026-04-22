@@ -7,18 +7,28 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <main class="card">
-      <h1>Панель модератора</h1>
-      <p class="hint">Управление верификацией имен.</p>
-      <p id="modStatus" class="status"></p>
-
-      <div class="tab-row">
-        <button id="tabUnverifiedBtn" type="button">Неверифицированные</button>
-        <button id="tabVerifiedBtn" type="button" class="secondary">Верифицированные</button>
+    <main class="panel mod-panel">
+      <div class="head-row">
+        <div>
+          <h1>Панель модератора</h1>
+          <p class="sub">Управление отправками и верификацией</p>
+        </div>
+        <button id="goMainBtn" type="button" class="ghost">На главную</button>
       </div>
 
-      <div id="submissions" class="submissions"></div>
-      <button id="goMainBtn" type="button" class="secondary">Назад на главную</button>
+      <p id="modStatus" class="status"></p>
+
+      <div class="lists-grid">
+        <section>
+          <h2>Неверифицированные</h2>
+          <ul id="unverifiedList" class="list"></ul>
+        </section>
+
+        <section>
+          <h2>Верифицированные</h2>
+          <ul id="verifiedList" class="list"></ul>
+        </section>
+      </div>
     </main>
 
     <script type="module" src="moderator.js"></script>

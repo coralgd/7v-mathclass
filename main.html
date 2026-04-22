@@ -7,19 +7,18 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <main class="card">
-      <section id="verifiedSection" class="hidden">
-        <h1>Главная страница</h1>
-        <p id="welcomeText" class="hint">Добро пожаловать!</p>
-        <button id="checkModeratorBtn" type="button">Проверить права модератора</button>
-        <button id="goModeratorBtn" type="button" class="hidden">Перейти на страницу модератора</button>
-        <p id="moderatorStatus" class="status"></p>
+    <main class="panel">
+      <section id="allowedBlock" class="hidden">
+        <h1>Главная</h1>
+        <p id="welcome" class="sub">Добро пожаловать</p>
+        <button id="checkModBtn" type="button">Проверить модератора</button>
+        <p id="modStatus" class="status"></p>
       </section>
 
-      <section id="blockedSection" class="hidden">
-        <h1>Доступ ограничен</h1>
-        <p class="status error force-visible">Нет верификации</p>
-        <button id="goIndexBtn" type="button">На страницу входа</button>
+      <section id="blockedBlock" class="hidden">
+        <h1>Доступ закрыт</h1>
+        <p class="status error always">Нет верификации</p>
+        <button id="goIndexBtn" type="button" class="ghost">На страницу входа</button>
       </section>
     </main>
 
