@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MathClass — Главная</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="panel">
+      <section id="allowedBlock" class="hidden">
+        <h1>Главная</h1>
+        <p id="welcome" class="sub">Добро пожаловать</p>
+        <button id="checkModBtn" type="button">Проверить модератора</button>
+        <p id="modStatus" class="status"></p>
+      </section>
+
+      <section id="blockedBlock" class="hidden">
+        <h1>Доступ закрыт</h1>
+        <p class="status error always">Нет верификации</p>
+        <button id="goIndexBtn" type="button" class="ghost">На страницу входа</button>
+      </section>
+    </main>
+
+    <script type="module" src="main.js"></script>
+  </body>
+</html>
