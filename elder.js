@@ -11,30 +11,34 @@ import {
   updateDoc,
 } from './firebase.js';
 
-const modStatus = document.getElementById('modStatus');
+const elderStatus = document.getElementById('elderStatus');
 const unverifiedList = document.getElementById('unverifiedList');
 const verifiedList = document.getElementById('verifiedList');
 const goMainBtn = document.getElementById('goMainBtn');
 const goMainDeniedBtn = document.getElementById('goMainDeniedBtn');
-const modPanelBlock = document.getElementById('modPanelBlock');
-const modDeniedBlock = document.getElementById('modDeniedBlock');
-const modDeniedText = document.getElementById('modDeniedText');
+const elderPanelBlock = document.getElementById('elderPanelBlock');
+const elderDeniedBlock = document.getElementById('elderDeniedBlock');
+const elderDeniedText = document.getElementById('elderDeniedText');
+
+let viewerId = null;
 
 const setStatus = (text, isError = false) => {
-  modStatus.textContent = text;
-  modStatus.className = `status ${isError ? 'error' : ''}`;
+  elderStatus.textContent = text;
+  elderStatus.className = `status ${isError ? 'error' : ''}`;
 };
 
 const showDenied = (text) => {
-  modPanelBlock.classList.add('hidden');
-  modDeniedBlock.classList.remove('hidden');
-  modDeniedText.textContent = text;
+  elderPanelBlock.classList.add('hidden');
+  elderDeniedBlock.classList.remove('hidden');
+  elderDeniedText.textContent = text;
 };
 
 const showPanel = () => {
-  modDeniedBlock.classList.add('hidden');
-  modPanelBlock.classList.remove('hidden');
+  elderDeniedBlock.classList.add('hidden');
+  elderPanelBlock.classList.remove('hidden');
 };
+
+const isElder = (value) => value === 'elder';
 
 goMainBtn.addEventListener('click', () => {
   window.location.href = 'main.html';
@@ -58,6 +62,12 @@ const createItem = (record) => {
   const name = document.createElement('p');
   name.innerHTML = `<strong>Имя:</strong> ${record.name || '—'}`;
 
+  const role = document.createElement('p');
+  role.innerHTML = `<strong>Роль:</strong> ${record.role || 'user'}`;
+
+  const actions = document.createElement('div');
+  actions.className = 'actions';
+
   const verifyButton = document.createElement('button');
   verifyButton.textContent = record.verified ? 'Снять верификацию' : 'Верифицировать';
   if (record.verified) verifyButton.classList.add('danger');
@@ -75,7 +85,31 @@ const createItem = (record) => {
     }
   });
 
-  li.append(badge, email, name, verifyButton);
+  actions.append(verifyButton);
+
+  const canEditRole = record.id !== viewerId && !isElder(record.role);
+  if (canEditRole) {
+    const roleButton = document.createElement('button');
+    const willBeModerator = record.role !== 'moderator';
+    roleButton.textContent = willBeModerator ? 'Назначить модером' : 'Снять модерку';
+    roleButton.className = willBeModerator ? 'ghost' : 'danger';
+
+    roleButton.addEventListener('click', async () => {
+      try {
+        await updateDoc(doc(db, 'users', record.id), {
+          role: willBeModerator ? 'moderator' : 'user',
+          updatedAt: new Date().toISOString(),
+        });
+        setStatus(willBeModerator ? 'Пользователь назначен модератором.' : 'Роль модератора снята.');
+      } catch (error) {
+        setStatus(error.code === 'permission-denied' ? 'Нет прав на изменение роли.' : error.message, true);
+      }
+    });
+
+    actions.append(roleButton);
+  }
+
+  li.append(badge, email, name, role, actions);
   return li;
 };
 
@@ -99,6 +133,7 @@ onAuthStateChanged(auth, async (user) => {
   }
 
   try {
+    viewerId = user.uid;
     const meSnap = await getDoc(doc(db, 'users', user.uid));
     if (!meSnap.exists()) {
       showDenied('Профиль не найден.');
@@ -106,13 +141,13 @@ onAuthStateChanged(auth, async (user) => {
     }
 
     const role = meSnap.data().role || 'user';
-    if (role !== 'moderator') {
+    if (!isElder(role)) {
       showDenied(`Нет доступа. Ваша роль: ${role}.`);
       return;
     }
 
     showPanel();
-    setStatus('Роль подтверждена: moderator.');
+    setStatus('Роль подтверждена: elder.');
 
     const q = query(collection(db, 'users'), where('nameSubmitted', '==', true));
     onSnapshot(
@@ -133,6 +168,6 @@ onAuthStateChanged(auth, async (user) => {
       },
     );
   } catch (error) {
-    showDenied(error.message || 'Ошибка доступа к панели.');
+    showDenied(error.message || 'Ошибка доступа к панели elder.');
   }
 });

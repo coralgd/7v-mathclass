@@ -25,18 +25,19 @@ const showModStatus = (text, isError = false) => {
   modStatus.className = `status ${isError ? 'error' : ''}`;
 };
 
-const isModerator = (value) => value === 'moderator' || value === 'senior_moderator';
+const isModerator = (value) => value === 'moderator' || value === 'elder';
 
 goIndexBtn.addEventListener('click', () => {
   window.location.href = 'index.html';
 });
 
 checkModBtn.addEventListener('click', () => {
-  if (isModerator(role)) {
-    window.location.href = 'moderator.html';
-  } else {
+  if (!isModerator(role)) {
     showModStatus('У вас нет прав модератора.', true);
+    return;
   }
+
+  window.location.href = role === 'elder' ? 'elder.html' : 'moderator.html';
 });
 
 onAuthStateChanged(auth, (user) => {
