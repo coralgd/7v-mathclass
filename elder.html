@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>MathClass — Модератор</title>
+    <title>MathClass — Elder</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
@@ -12,16 +12,16 @@
     </video>
 
     <main class="panel mod-panel">
-      <section id="modPanelBlock" class="hidden">
+      <section id="elderPanelBlock" class="hidden">
         <div class="head-row">
           <div>
-            <h1>Панель модератора</h1>
-            <p class="sub">Управление отправками и верификацией</p>
+            <h1>Панель elder</h1>
+            <p class="sub">Управление отправками, верификацией и ролями</p>
           </div>
           <button id="goMainBtn" type="button" class="ghost">На главную</button>
         </div>
 
-        <p id="modStatus" class="status"></p>
+        <p id="elderStatus" class="status"></p>
 
         <div class="lists-grid">
           <section>
@@ -36,9 +36,9 @@
         </div>
       </section>
 
-      <section id="modDeniedBlock" class="hidden">
+      <section id="elderDeniedBlock" class="hidden">
         <h1>Доступ закрыт</h1>
-        <p id="modDeniedText" class="status error always">Недостаточно прав.</p>
+        <p id="elderDeniedText" class="status error always">Недостаточно прав.</p>
         <div class="blocked-visual">
           <img src="assets/access.jpg" alt="Доступ ограничен" />
         </div>
@@ -46,6 +46,6 @@
       </section>
     </main>
 
-    <script type="module" src="moderator.js"></script>
+    <script type="module" src="elder.js"></script>
   </body>
 </html>
