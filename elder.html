@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MathClass — Elder</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <video class="bg-video" autoplay muted loop playsinline>
+      <source src="assets/BG.mp4" type="video/mp4" />
+    </video>
+
+    <main class="panel mod-panel">
+      <section id="elderPanelBlock" class="hidden">
+        <div class="head-row">
+          <div>
+            <h1>Панель elder</h1>
+            <p class="sub">Управление отправками, верификацией и ролями</p>
+          </div>
+          <button id="goMainBtn" type="button" class="ghost">На главную</button>
+        </div>
+
+        <p id="elderStatus" class="status"></p>
+
+        <div class="lists-grid">
+          <section>
+            <h2>Неверифицированные</h2>
+            <ul id="unverifiedList" class="list"></ul>
+          </section>
+
+          <section>
+            <h2>Верифицированные</h2>
+            <ul id="verifiedList" class="list"></ul>
+          </section>
+        </div>
+      </section>
+
+      <section id="elderDeniedBlock" class="hidden">
+        <h1>Доступ закрыт</h1>
+        <p id="elderDeniedText" class="status error always">Недостаточно прав.</p>
+        <div class="blocked-visual">
+          <img src="assets/access.jpg" alt="Доступ ограничен" />
+        </div>
+        <button id="goMainDeniedBtn" type="button" class="ghost">На главную</button>
+      </section>
+    </main>
+
+    <script type="module" src="elder.js"></script>
+  </body>
+</html>
