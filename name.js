@@ -5,6 +5,7 @@ import {
   doc,
   getDoc,
   setDoc,
+  onSnapshot,
 } from './firebase.js';
 
 const nameInput = document.getElementById('name');
@@ -16,31 +17,39 @@ const showStatus = (text, isError = false) => {
   statusEl.className = `status ${isError ? 'error' : 'success'}`;
 };
 
-const lockSubmittedState = (name, verified = false) => {
+const lockSubmittedState = (name) => {
   nameInput.value = name;
   nameInput.disabled = true;
   submitBtn.disabled = true;
   submitBtn.textContent = 'Отправлено, жди верификации';
-  showStatus(verified ? 'Имя подтверждено. Перенаправляем...' : 'Имя уже отправлено, статус: не верифицирован.');
+  showStatus('Имя уже отправлено, статус: не верифицирован.');
+};
+
+const unlockForm = () => {
+  nameInput.disabled = false;
+  submitBtn.disabled = false;
+  submitBtn.textContent = 'Отправить';
 };
 
 const ensureUserDoc = async (userRef, userEmail) => {
   const snapshot = await getDoc(userRef);
 
   if (snapshot.exists()) {
-    return snapshot.data();
+    return;
   }
 
-  const baseData = {
-    email: userEmail,
-    verified: false,
-    name: null,
-    nameSubmitted: false,
-    createdAt: new Date().toISOString(),
-  };
-
-  await setDoc(userRef, baseData, { merge: true });
-  return baseData;
+  await setDoc(
+    userRef,
+    {
+      email: userEmail,
+      verified: false,
+      role: 'user',
+      name: null,
+      nameSubmitted: false,
+      createdAt: new Date().toISOString(),
+    },
+    { merge: true },
+  );
 };
 
 onAuthStateChanged(auth, async (user) => {
@@ -52,19 +61,32 @@ onAuthStateChanged(auth, async (user) => {
   const userRef = doc(db, 'users', user.uid);
 
   try {
-    const data = await ensureUserDoc(userRef, user.email);
-
-    if (data.verified) {
-      window.location.href = 'main.html';
-      return;
-    }
-
-    if (data.nameSubmitted && data.name) {
-      lockSubmittedState(data.name, false);
-    }
+    await ensureUserDoc(userRef, user.email);
   } catch (error) {
     showStatus(error.message || 'Не удалось загрузить профиль.', true);
   }
+
+  onSnapshot(
+    userRef,
+    (snapshot) => {
+      if (!snapshot.exists()) return;
+
+      const data = snapshot.data();
+      if (data.verified) {
+        window.location.href = 'main.html';
+        return;
+      }
+
+      if (data.nameSubmitted && data.name) {
+        lockSubmittedState(data.name);
+      } else {
+        unlockForm();
+      }
+    },
+    (error) => {
+      showStatus(error.message || 'Ошибка синхронизации профиля.', true);
+    },
+  );
 
   submitBtn.addEventListener('click', async () => {
     const name = nameInput.value.trim();
@@ -87,7 +109,6 @@ onAuthStateChanged(auth, async (user) => {
         },
         { merge: true },
       );
-      lockSubmittedState(name, false);
     } catch (error) {
       showStatus(error.message || 'Ошибка сохранения.', true);
     }

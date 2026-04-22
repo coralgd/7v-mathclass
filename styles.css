@@ -126,3 +126,20 @@ button:disabled {
 .force-visible {
   display: block;
 }
+
+.submissions {
+  display: grid;
+  gap: 12px;
+  margin: 12px 0;
+}
+
+.submission-item {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+  background: #fbfcff;
+}
+
+.submission-item p {
+  margin: 0 0 6px;
+}

@@ -47,6 +47,7 @@ const upsertUserDoc = async (user, email) => {
       verified: false,
       name: null,
       nameSubmitted: false,
+      role: 'user',
       updatedAt: new Date().toISOString(),
     },
     { merge: true },
