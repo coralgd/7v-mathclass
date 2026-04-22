@@ -20,7 +20,7 @@ service cloud.firestore {
         && exists(/databases/$(database)/documents/users/$(request.auth.uid))
         && (
           get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'moderator'
-          || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'senior_moderator'
+          || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'elder'
         );
     }
 
@@ -34,7 +34,7 @@ service cloud.firestore {
         && request.resource.data.role == 'user';
 
       // Обычный пользователь не может менять verified/role.
-      // Модератор/старший модератор может.
+      // Модератор/elder может.
       allow update: if (
           isSelf(userId)
           && request.resource.data.verified == resource.data.verified
@@ -49,6 +49,6 @@ service cloud.firestore {
 ```
 
 ## Что обязательно проверить
-1. В документе модератора `users/{uid}` поле `role` = `moderator` или `senior_moderator`.
+1. В документе модератора `users/{uid}` поле `role` = `moderator` или `elder`.
 2. Пользователь реально залогинен под этим `uid`.
 3. После обновления правил дождись публикации (обычно несколько секунд).
