@@ -34,6 +34,9 @@ const setTab = (tab) => {
   renderSubmissions();
 };
 
+const permissionHelp =
+  'Нет прав к списку. Проверь Firestore Rules и поле role (moderator/senior_moderator) в users/{uid}.';
+
 goMainBtn.addEventListener('click', () => {
   window.location.href = 'main.html';
 });
@@ -81,7 +84,11 @@ const renderSubmissions = () => {
         });
         setStatus(!currentVerified ? 'Пользователь верифицирован.' : 'Верификация снята.');
       } catch (error) {
-        setStatus(error.message || 'Ошибка изменения статуса.', true);
+        if (error?.code === 'permission-denied') {
+          setStatus(permissionHelp, true);
+        } else {
+          setStatus(error.message || 'Ошибка изменения статуса.', true);
+        }
       }
     });
   });
@@ -102,12 +109,12 @@ onAuthStateChanged(auth, async (user) => {
 
     const role = currentUserSnapshot.data().role || 'user';
     if (!hasModeratorRights(role)) {
-      setStatus('Нет доступа: нужны права модератора.', true);
+      setStatus(`Нет доступа: роль ${role}. Нужны moderator или senior_moderator.`, true);
       submissionsEl.innerHTML = '';
       return;
     }
 
-    setStatus('Доступ модератора подтвержден.');
+    setStatus(`Доступ подтверждён. Твоя роль: ${role}.`);
 
     const submissionsQuery = query(collection(db, 'users'), where('nameSubmitted', '==', true));
     onSnapshot(
@@ -116,9 +123,19 @@ onAuthStateChanged(auth, async (user) => {
         allSubmissions = snapshot.docs.map((userDoc) => ({ id: userDoc.id, ...userDoc.data() }));
         renderSubmissions();
       },
-      (error) => setStatus(error.message || 'Ошибка загрузки отправок.', true),
+      (error) => {
+        if (error?.code === 'permission-denied') {
+          setStatus(permissionHelp, true);
+        } else {
+          setStatus(error.message || 'Ошибка загрузки отправок.', true);
+        }
+      },
     );
   } catch (error) {
-    setStatus(error.message || 'Ошибка проверки прав.', true);
+    if (error?.code === 'permission-denied') {
+      setStatus(permissionHelp, true);
+    } else {
+      setStatus(error.message || 'Ошибка проверки прав.', true);
+    }
   }
 });
