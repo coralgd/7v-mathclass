@@ -1,4 +1,4 @@
-# Firestore Rules (corrected)
+# Firestore Rules (extended)
 
 Вставь эти правила в **Firebase Console -> Firestore Database -> Rules** и нажми **Publish**.
 
@@ -20,35 +20,52 @@ service cloud.firestore {
         && exists(/databases/$(database)/documents/users/$(request.auth.uid))
         && (
           get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'moderator'
-          || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'senior_moderator'
+          || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'elder'
         );
     }
 
+    function isElder() {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'elder';
+    }
+
     match /users/{userId} {
-      // Читать свой документ может сам пользователь, а модераторы - все документы.
       allow read: if isSelf(userId) || isModerator();
 
-      // Создание только своего документа и только с безопасными дефолтами.
       allow create: if isSelf(userId)
         && request.resource.data.verified == false
         && request.resource.data.role == 'user';
 
-      // Обычный пользователь не может менять verified/role.
-      // Модератор/старший модератор может.
       allow update: if (
           isSelf(userId)
           && request.resource.data.verified == resource.data.verified
           && request.resource.data.role == resource.data.role
+          && request.resource.data.blockedForever == resource.data.blockedForever
         )
         || isModerator();
 
       allow delete: if false;
+    }
+
+    match /blocked_ips/{ip} {
+      allow read: if isSignedIn();
+      allow create, update: if isElder();
+      allow delete: if false;
+    }
+
+
+    match /audit_logs/{logId} {
+      allow read: if isElder();
+      allow create: if isSignedIn();
+      allow update, delete: if false;
     }
   }
 }
 ```
 
 ## Что обязательно проверить
-1. В документе модератора `users/{uid}` поле `role` = `moderator` или `senior_moderator`.
-2. Пользователь реально залогинен под этим `uid`.
-3. После обновления правил дождись публикации (обычно несколько секунд).
+1. В документе модератора `users/{uid}` поле `role` = `moderator` или `elder`.
+2. У elder есть право записи в `blocked_ips/{ip}`.
+3. У elder есть право чтения архива `audit_logs`, а авторизованные пользователи могут писать события.
+4. Пользователь с `blockedForever: true` и/или IP из `blocked_ips` должен видеть вечный бан на странице входа.

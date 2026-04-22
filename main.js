@@ -1,4 +1,5 @@
 import { auth, db, onAuthStateChanged, doc, onSnapshot } from './firebase.js';
+import { enforcePageAccess } from './guards.js';
 
 const allowedBlock = document.getElementById('allowedBlock');
 const blockedBlock = document.getElementById('blockedBlock');
@@ -25,22 +26,37 @@ const showModStatus = (text, isError = false) => {
   modStatus.className = `status ${isError ? 'error' : ''}`;
 };
 
-const isModerator = (value) => value === 'moderator' || value === 'senior_moderator';
+const isModerator = (value) => value === 'moderator' || value === 'elder';
 
 goIndexBtn.addEventListener('click', () => {
   window.location.href = 'index.html';
 });
 
 checkModBtn.addEventListener('click', () => {
-  if (isModerator(role)) {
-    window.location.href = 'moderator.html';
-  } else {
+  if (!isModerator(role)) {
     showModStatus('У вас нет прав модератора.', true);
+    return;
   }
+
+  window.location.href = role === 'elder' ? 'elder.html' : 'moderator.html';
 });
 
-onAuthStateChanged(auth, (user) => {
+onAuthStateChanged(auth, async (user) => {
   if (!user) {
+    window.location.href = 'index.html';
+    return;
+  }
+
+  const access = await enforcePageAccess(user, {
+    requireVerified: true,
+    allowedRoles: ['user', 'moderator', 'elder'],
+  });
+
+  if (!access.ok) {
+    if (access.reason === 'blocked_forever') {
+      window.location.href = 'index.html';
+      return;
+    }
     showBlocked();
     return;
   }
@@ -53,6 +69,11 @@ onAuthStateChanged(auth, (user) => {
 
     const data = snap.data();
     role = data.role || 'user';
+
+    if (data.blockedForever) {
+      window.location.href = 'index.html';
+      return;
+    }
 
     if (data.verified) {
       showAllowed(data.name);

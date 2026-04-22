@@ -1,4 +1,5 @@
 import { auth, db, onAuthStateChanged, doc, getDoc, setDoc, onSnapshot } from './firebase.js';
+import { enforcePageAccess } from './guards.js';
 
 const nameInput = document.getElementById('name');
 const submitBtn = document.getElementById('submitNameBtn');
@@ -51,12 +52,25 @@ onAuthStateChanged(auth, async (user) => {
     return;
   }
 
+  const access = await enforcePageAccess(user, {
+    allowedRoles: ['user', 'moderator', 'elder'],
+  });
+  if (!access.ok) {
+    window.location.href = 'index.html';
+    return;
+  }
+
   const userRef = doc(db, 'users', user.uid);
   await ensureUserDoc(userRef, user.email);
 
   onSnapshot(userRef, (snap) => {
     if (!snap.exists()) return;
     const data = snap.data();
+
+    if (data.blockedForever) {
+      window.location.href = 'index.html';
+      return;
+    }
 
     if (data.verified) {
       window.location.href = 'main.html';
@@ -89,7 +103,6 @@ onAuthStateChanged(auth, async (user) => {
           email: user.email,
           name,
           nameSubmitted: true,
-          verified: false,
           submittedAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         },
