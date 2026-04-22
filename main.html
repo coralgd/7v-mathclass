@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MathClass — Главная</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="card">
+      <section id="verifiedSection" class="hidden">
+        <h1>Главная страница</h1>
+        <p id="welcomeText" class="hint">Добро пожаловать!</p>
+        <button id="checkModeratorBtn" type="button">Проверить права модератора</button>
+        <button id="goModeratorBtn" type="button" class="hidden">Перейти на страницу модератора</button>
+        <p id="moderatorStatus" class="status"></p>
+      </section>
+
+      <section id="blockedSection" class="hidden">
+        <h1>Доступ ограничен</h1>
+        <p class="status error force-visible">Нет верификации</p>
+        <button id="goIndexBtn" type="button">На страницу входа</button>
+      </section>
+    </main>
+
+    <script type="module" src="main.js"></script>
+  </body>
+</html>

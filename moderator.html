@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MathClass — Модератор</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="card">
+      <h1>Панель модератора</h1>
+      <p class="hint">Управление верификацией имен.</p>
+      <p id="modStatus" class="status"></p>
+
+      <div class="tab-row">
+        <button id="tabUnverifiedBtn" type="button">Неверифицированные</button>
+        <button id="tabVerifiedBtn" type="button" class="secondary">Верифицированные</button>
+      </div>
+
+      <div id="submissions" class="submissions"></div>
+      <button id="goMainBtn" type="button" class="secondary">Назад на главную</button>
+    </main>
+
+    <script type="module" src="moderator.js"></script>
+  </body>
+</html>
