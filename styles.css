@@ -156,10 +156,11 @@ button:disabled {
 }
 
 .list {
-  list-style: none;
+  list-style: disc;
+  list-style-position: inside;
   margin: 0;
-  padding: 0;
-  max-height: 440px;
+  padding: 0 0 0 6px;
+  height: 440px;
   overflow-y: auto;
   border: 1px solid var(--line);
   border-radius: 10px;
