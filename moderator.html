@@ -7,28 +7,43 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
+    <video class="bg-video" autoplay muted loop playsinline>
+      <source src="assets/BG.mp4" type="video/mp4" />
+    </video>
+
     <main class="panel mod-panel">
-      <div class="head-row">
-        <div>
-          <h1>Панель модератора</h1>
-          <p class="sub">Управление отправками и верификацией</p>
+      <section id="modPanelBlock" class="hidden">
+        <div class="head-row">
+          <div>
+            <h1>Панель модератора</h1>
+            <p class="sub">Управление отправками и верификацией</p>
+          </div>
+          <button id="goMainBtn" type="button" class="ghost">На главную</button>
         </div>
-        <button id="goMainBtn" type="button" class="ghost">На главную</button>
-      </div>
 
-      <p id="modStatus" class="status"></p>
+        <p id="modStatus" class="status"></p>
 
-      <div class="lists-grid">
-        <section>
-          <h2>Неверифицированные</h2>
-          <ul id="unverifiedList" class="list"></ul>
-        </section>
+        <div class="lists-grid">
+          <section>
+            <h2>Неверифицированные</h2>
+            <ul id="unverifiedList" class="list"></ul>
+          </section>
 
-        <section>
-          <h2>Верифицированные</h2>
-          <ul id="verifiedList" class="list"></ul>
-        </section>
-      </div>
+          <section>
+            <h2>Верифицированные</h2>
+            <ul id="verifiedList" class="list"></ul>
+          </section>
+        </div>
+      </section>
+
+      <section id="modDeniedBlock" class="hidden">
+        <h1>Доступ закрыт</h1>
+        <p id="modDeniedText" class="status error always">Недостаточно прав.</p>
+        <div class="blocked-visual">
+          <img src="assets/access.jpg" alt="Доступ ограничен" />
+        </div>
+        <button id="goMainDeniedBtn" type="button" class="ghost">На главную</button>
+      </section>
     </main>
 
     <script type="module" src="moderator.js"></script>

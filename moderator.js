@@ -15,6 +15,13 @@ const modStatus = document.getElementById('modStatus');
 const unverifiedList = document.getElementById('unverifiedList');
 const verifiedList = document.getElementById('verifiedList');
 const goMainBtn = document.getElementById('goMainBtn');
+const goMainDeniedBtn = document.getElementById('goMainDeniedBtn');
+const modPanelBlock = document.getElementById('modPanelBlock');
+const modDeniedBlock = document.getElementById('modDeniedBlock');
+const modDeniedText = document.getElementById('modDeniedText');
+
+let viewerRole = 'user';
+let viewerId = null;
 
 const setStatus = (text, isError = false) => {
   modStatus.textContent = text;
@@ -22,8 +29,24 @@ const setStatus = (text, isError = false) => {
 };
 
 const isModerator = (value) => value === 'moderator' || value === 'senior_moderator';
+const isSeniorModerator = (value) => value === 'senior_moderator';
+
+const showDenied = (text) => {
+  modPanelBlock.classList.add('hidden');
+  modDeniedBlock.classList.remove('hidden');
+  modDeniedText.textContent = text;
+};
+
+const showPanel = () => {
+  modDeniedBlock.classList.add('hidden');
+  modPanelBlock.classList.remove('hidden');
+};
 
 goMainBtn.addEventListener('click', () => {
+  window.location.href = 'main.html';
+});
+
+goMainDeniedBtn.addEventListener('click', () => {
   window.location.href = 'main.html';
 });
 
@@ -41,11 +64,17 @@ const createItem = (record) => {
   const name = document.createElement('p');
   name.innerHTML = `<strong>Имя:</strong> ${record.name || '—'}`;
 
-  const button = document.createElement('button');
-  button.textContent = record.verified ? 'Снять верификацию' : 'Верифицировать';
-  if (record.verified) button.classList.add('danger');
+  const role = document.createElement('p');
+  role.innerHTML = `<strong>Роль:</strong> ${record.role || 'user'}`;
 
-  button.addEventListener('click', async () => {
+  const actions = document.createElement('div');
+  actions.className = 'actions';
+
+  const verifyButton = document.createElement('button');
+  verifyButton.textContent = record.verified ? 'Снять верификацию' : 'Верифицировать';
+  if (record.verified) verifyButton.classList.add('danger');
+
+  verifyButton.addEventListener('click', async () => {
     try {
       await updateDoc(doc(db, 'users', record.id), {
         verified: !record.verified,
@@ -58,7 +87,33 @@ const createItem = (record) => {
     }
   });
 
-  li.append(badge, email, name, button);
+  actions.append(verifyButton);
+
+  if (isSeniorModerator(viewerRole)) {
+    const canEditRole = record.id !== viewerId && !isSeniorModerator(record.role);
+    if (canEditRole) {
+      const roleButton = document.createElement('button');
+      const willBeModerator = record.role !== 'moderator';
+      roleButton.textContent = willBeModerator ? 'Назначить модером' : 'Снять модерку';
+      roleButton.className = willBeModerator ? 'ghost' : 'danger';
+
+      roleButton.addEventListener('click', async () => {
+        try {
+          await updateDoc(doc(db, 'users', record.id), {
+            role: willBeModerator ? 'moderator' : 'user',
+            updatedAt: new Date().toISOString(),
+          });
+          setStatus(willBeModerator ? 'Пользователь назначен модератором.' : 'Роль модератора снята.');
+        } catch (error) {
+          setStatus(error.code === 'permission-denied' ? 'Нет прав на изменение роли.' : error.message, true);
+        }
+      });
+
+      actions.append(roleButton);
+    }
+  }
+
+  li.append(badge, email, name, role, actions);
   return li;
 };
 
@@ -82,19 +137,21 @@ onAuthStateChanged(auth, async (user) => {
   }
 
   try {
+    viewerId = user.uid;
     const meSnap = await getDoc(doc(db, 'users', user.uid));
     if (!meSnap.exists()) {
-      setStatus('Профиль не найден.', true);
+      showDenied('Профиль не найден.');
       return;
     }
 
-    const role = meSnap.data().role || 'user';
-    if (!isModerator(role)) {
-      setStatus(`Нет доступа. Ваша роль: ${role}.`, true);
+    viewerRole = meSnap.data().role || 'user';
+    if (!isModerator(viewerRole)) {
+      showDenied(`Нет доступа. Ваша роль: ${viewerRole}.`);
       return;
     }
 
-    setStatus(`Роль подтверждена: ${role}.`);
+    showPanel();
+    setStatus(`Роль подтверждена: ${viewerRole}.`);
 
     const q = query(collection(db, 'users'), where('nameSubmitted', '==', true));
     onSnapshot(
@@ -115,6 +172,6 @@ onAuthStateChanged(auth, async (user) => {
       },
     );
   } catch (error) {
-    setStatus(error.message || 'Ошибка доступа к панели.', true);
+    showDenied(error.message || 'Ошибка доступа к панели.');
   }
 });
