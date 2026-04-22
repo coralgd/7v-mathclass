@@ -11,7 +11,7 @@
       <source src="assets/BG.mp4" type="video/mp4" />
     </video>
 
-    <main class="panel auth-panel">
+    <main class="panel auth-panel" id="authPanel">
       <h1>MathClass</h1>
       <p class="sub">Вход и регистрация</p>
 
@@ -27,6 +27,14 @@
       </div>
 
       <p id="status" class="status"></p>
+    </main>
+
+    <main class="panel auth-panel hidden" id="foreverPanel">
+      <h1>Доступ навсегда закрыт</h1>
+      <div class="blocked-visual">
+        <img src="assets/forever.jpg" alt="Доступ закрыт навсегда" />
+      </div>
+      <p class="status error always">О нет, тебя здесь навсегда заблокировали!</p>
     </main>
 
     <script type="module" src="index.js"></script>

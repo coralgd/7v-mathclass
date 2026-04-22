@@ -13,6 +13,10 @@ import {
 const modStatus = document.getElementById('modStatus');
 const unverifiedList = document.getElementById('unverifiedList');
 const verifiedList = document.getElementById('verifiedList');
+const unverifiedSection = document.getElementById('unverifiedSection');
+const verifiedSection = document.getElementById('verifiedSection');
+const tabUnverified = document.getElementById('tabUnverified');
+const tabVerified = document.getElementById('tabVerified');
 const goMainBtn = document.getElementById('goMainBtn');
 const goMainDeniedBtn = document.getElementById('goMainDeniedBtn');
 const modPanelBlock = document.getElementById('modPanelBlock');
@@ -26,6 +30,14 @@ const setStatus = (text, isError = false) => {
   modStatus.className = `status ${isError ? 'error' : ''}`;
 };
 
+const activateTab = (tab) => {
+  const showUnverified = tab === 'unverified';
+  unverifiedSection.classList.toggle('hidden', !showUnverified);
+  verifiedSection.classList.toggle('hidden', showUnverified);
+  tabUnverified.classList.toggle('ghost', !showUnverified);
+  tabVerified.classList.toggle('ghost', showUnverified);
+};
+
 const showDenied = (text) => {
   modPanelBlock.classList.add('hidden');
   modDeniedBlock.classList.remove('hidden');
@@ -37,6 +49,9 @@ const showPanel = () => {
   modPanelBlock.classList.remove('hidden');
 };
 
+tabUnverified.addEventListener('click', () => activateTab('unverified'));
+tabVerified.addEventListener('click', () => activateTab('verified'));
+
 goMainBtn.addEventListener('click', () => {
   window.location.href = 'main.html';
 });
@@ -47,7 +62,7 @@ goMainDeniedBtn.addEventListener('click', () => {
 
 const createItem = (record) => {
   const li = document.createElement('li');
-  li.className = 'item';
+  li.className = 'item item-card';
 
   const badge = document.createElement('span');
   badge.className = `badge ${record.verified ? 'ok' : 'warn'}`;
@@ -60,6 +75,9 @@ const createItem = (record) => {
 
   const name = document.createElement('p');
   name.innerHTML = `<strong>Имя:</strong> ${record.name || '—'}${isSelf ? ' (Вы)' : ''}`;
+
+  const ip = document.createElement('p');
+  ip.innerHTML = `<strong>IP:</strong> ${record.lastIp || record.createdIp || '—'}`;
 
   const verifyButton = document.createElement('button');
   verifyButton.textContent = record.verified ? 'Снять верификацию' : 'Верифицировать';
@@ -78,7 +96,7 @@ const createItem = (record) => {
     }
   });
 
-  li.append(badge, email, name, verifyButton);
+  li.append(badge, email, name, ip, verifyButton);
   return li;
 };
 
@@ -86,7 +104,7 @@ const fillList = (target, items) => {
   target.innerHTML = '';
   if (!items.length) {
     const empty = document.createElement('li');
-    empty.className = 'item';
+    empty.className = 'item item-card';
     empty.textContent = 'Список пуст.';
     target.append(empty);
     return;
@@ -116,6 +134,7 @@ onAuthStateChanged(auth, async (user) => {
     }
 
     showPanel();
+    activateTab('unverified');
     setStatus('Роль подтверждена: moderator.');
 
     const q = query(collection(db, 'users'));
