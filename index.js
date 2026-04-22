@@ -1,7 +1,10 @@
 import {
   auth,
+  db,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
+  doc,
+  setDoc,
 } from './firebase.js';
 
 const emailInput = document.getElementById('email');
@@ -27,6 +30,22 @@ const getCredentials = () => {
   return { email, password };
 };
 
+const ensureUserAccountDoc = async (user, email) => {
+  const userRef = doc(db, 'users', user.uid);
+
+  await setDoc(
+    userRef,
+    {
+      email,
+      verified: false,
+      name: null,
+      nameSubmitted: false,
+      updatedAt: new Date().toISOString(),
+    },
+    { merge: true },
+  );
+};
+
 const goToNamePage = () => {
   window.location.href = 'name.html';
 };
@@ -37,7 +56,8 @@ registerBtn.addEventListener('click', async () => {
 
   try {
     showStatus('Регистрируем...');
-    await createUserWithEmailAndPassword(auth, credentials.email, credentials.password);
+    const result = await createUserWithEmailAndPassword(auth, credentials.email, credentials.password);
+    await ensureUserAccountDoc(result.user, credentials.email);
     goToNamePage();
   } catch (error) {
     showStatus(error.message, true);
@@ -50,7 +70,8 @@ loginBtn.addEventListener('click', async () => {
 
   try {
     showStatus('Входим...');
-    await signInWithEmailAndPassword(auth, credentials.email, credentials.password);
+    const result = await signInWithEmailAndPassword(auth, credentials.email, credentials.password);
+    await ensureUserAccountDoc(result.user, credentials.email);
     goToNamePage();
   } catch (error) {
     showStatus(error.message, true);

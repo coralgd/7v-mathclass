@@ -16,12 +16,12 @@ const showStatus = (text, isError = false) => {
   statusEl.className = `status ${isError ? 'error' : 'success'}`;
 };
 
-const lockSubmittedState = (name) => {
+const lockSubmittedState = (name, verified = false) => {
   nameInput.value = name;
   nameInput.disabled = true;
   submitBtn.disabled = true;
   submitBtn.textContent = 'Отправлено, жди верификации';
-  showStatus('Имя уже отправлено.');
+  showStatus(verified ? 'Имя подтверждено.' : 'Имя уже отправлено, статус: не верифицирован.');
 };
 
 onAuthStateChanged(auth, async (user) => {
@@ -33,8 +33,23 @@ onAuthStateChanged(auth, async (user) => {
   const userRef = doc(db, 'users', user.uid);
   const snapshot = await getDoc(userRef);
 
-  if (snapshot.exists() && snapshot.data().name) {
-    lockSubmittedState(snapshot.data().name);
+  if (snapshot.exists()) {
+    const data = snapshot.data();
+    if (data.nameSubmitted && data.name) {
+      lockSubmittedState(data.name, Boolean(data.verified));
+    }
+  } else {
+    await setDoc(
+      userRef,
+      {
+        email: user.email,
+        verified: false,
+        name: null,
+        nameSubmitted: false,
+        createdAt: new Date().toISOString(),
+      },
+      { merge: true },
+    );
   }
 
   submitBtn.addEventListener('click', async () => {
@@ -51,12 +66,14 @@ onAuthStateChanged(auth, async (user) => {
         {
           email: user.email,
           name,
-          createdAt: new Date().toISOString(),
+          nameSubmitted: true,
+          submittedAt: new Date().toISOString(),
           verified: false,
+          updatedAt: new Date().toISOString(),
         },
         { merge: true },
       );
-      lockSubmittedState(name);
+      lockSubmittedState(name, false);
     } catch (error) {
       showStatus(error.message, true);
     }
