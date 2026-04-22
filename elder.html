@@ -16,7 +16,7 @@
         <div class="head-row">
           <div>
             <h1>Панель elder</h1>
-            <p class="sub">Управление отправками, верификацией и ролями</p>
+            <p class="sub">Управление отправками, верификацией, ролями и архивом действий</p>
           </div>
           <button id="goMainBtn" type="button" class="ghost">На главную</button>
         </div>
@@ -34,6 +34,16 @@
 
         <section id="verifiedSection" class="hidden">
           <ul id="verifiedList" class="list"></ul>
+        </section>
+
+        <section class="archive-panel">
+          <h2>Архив действий</h2>
+          <p class="sub">Поиск по действию или по пользователю</p>
+          <div class="archive-search">
+            <input id="actionSearch" type="text" placeholder="Поиск по действию (пример: verify_user)" />
+            <input id="userSearch" type="text" placeholder="Поиск по пользователю (email/uid)" />
+          </div>
+          <ul id="auditList" class="list"></ul>
         </section>
       </section>
 

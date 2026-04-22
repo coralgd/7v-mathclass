@@ -4,6 +4,7 @@ import {
   onAuthStateChanged,
   doc,
   getDoc,
+  setDoc,
   collection,
   query,
   onSnapshot,
@@ -24,10 +25,26 @@ const modDeniedBlock = document.getElementById('modDeniedBlock');
 const modDeniedText = document.getElementById('modDeniedText');
 
 let viewerId = null;
+let viewerEmail = null;
 
 const setStatus = (text, isError = false) => {
   modStatus.textContent = text;
   modStatus.className = `status ${isError ? 'error' : ''}`;
+};
+
+const createAuditRecord = async (action, target = {}) => {
+  if (!viewerId) return;
+  const logRef = doc(collection(db, 'audit_logs'));
+  await setDoc(logRef, {
+    action,
+    actorId: viewerId,
+    actorEmail: viewerEmail || null,
+    targetId: target.id || null,
+    targetEmail: target.email || null,
+    targetIp: target.ip || null,
+    details: target.details || null,
+    createdAt: new Date().toISOString(),
+  });
 };
 
 const activateTab = (tab) => {
@@ -90,6 +107,11 @@ const createItem = (record) => {
         verifiedAt: !record.verified ? new Date().toISOString() : null,
         updatedAt: new Date().toISOString(),
       });
+      await createAuditRecord(record.verified ? 'unverify_user' : 'verify_user', {
+        id: record.id,
+        email: record.email,
+        ip: record.lastIp || record.createdIp || null,
+      });
       setStatus(!record.verified ? 'Пользователь верифицирован.' : 'Верификация снята.');
     } catch (error) {
       setStatus(error.code === 'permission-denied' ? 'Нет прав на изменение верификации.' : error.message, true);
@@ -121,6 +143,7 @@ onAuthStateChanged(auth, async (user) => {
 
   try {
     viewerId = user.uid;
+    viewerEmail = user.email || null;
     const meSnap = await getDoc(doc(db, 'users', user.uid));
     if (!meSnap.exists()) {
       showDenied('Профиль не найден.');

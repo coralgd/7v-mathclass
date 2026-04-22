@@ -53,6 +53,13 @@ service cloud.firestore {
       allow create, update: if isElder();
       allow delete: if false;
     }
+
+
+    match /audit_logs/{logId} {
+      allow read: if isElder();
+      allow create: if isSignedIn();
+      allow update, delete: if false;
+    }
   }
 }
 ```
@@ -60,4 +67,5 @@ service cloud.firestore {
 ## Что обязательно проверить
 1. В документе модератора `users/{uid}` поле `role` = `moderator` или `elder`.
 2. У elder есть право записи в `blocked_ips/{ip}`.
-3. Пользователь с `blockedForever: true` и/или IP из `blocked_ips` должен видеть вечный бан на странице входа.
+3. У elder есть право чтения архива `audit_logs`, а авторизованные пользователи могут писать события.
+4. Пользователь с `blockedForever: true` и/или IP из `blocked_ips` должен видеть вечный бан на странице входа.

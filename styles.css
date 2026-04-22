@@ -213,3 +213,30 @@ button:disabled {
   max-height: 360px;
   object-fit: cover;
 }
+
+
+.archive-panel {
+  margin-top: 18px;
+}
+
+.archive-search {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.role-manager {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.role-select {
+  width: 100%;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: #0f1729;
+  color: var(--text);
+  font-size: 15px;
+  padding: 10px 12px;
+}
