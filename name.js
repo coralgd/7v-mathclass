@@ -55,7 +55,7 @@ logoutBtn.addEventListener('click', async () => {
 onAuthStateChanged(auth, async (user) => {
   const access = await checkPageAccess(user, 'name');
 
-  if (access.reason === 'blocked_ip' || access.reason === 'blocked_account') {
+  if (access.reason === 'ip_unresolved' || access.reason === 'blocked_ip' || access.reason === 'blocked_account') {
     window.location.href = 'index.html';
     return;
   }
@@ -96,6 +96,13 @@ onAuthStateChanged(auth, async (user) => {
 
   submitBtn.addEventListener('click', async () => {
     if (locked) return;
+
+    const liveAccess = await checkPageAccess(auth.currentUser, 'name');
+    if (!liveAccess.ok) {
+      await signOut(auth);
+      window.location.href = 'index.html';
+      return;
+    }
 
     const name = nameInput.value.trim();
     if (!name) {

@@ -40,7 +40,14 @@ logoutBtn.addEventListener('click', async () => {
   window.location.href = 'index.html';
 });
 
-checkModBtn.addEventListener('click', () => {
+checkModBtn.addEventListener('click', async () => {
+  const liveAccess = await checkPageAccess(auth.currentUser, 'main');
+  if (!liveAccess.ok) {
+    await signOut(auth);
+    window.location.href = 'index.html';
+    return;
+  }
+
   if (!isModerator(role)) {
     showModStatus('У вас нет прав модератора.', true);
     return;
@@ -52,7 +59,7 @@ checkModBtn.addEventListener('click', () => {
 onAuthStateChanged(auth, async (user) => {
   const access = await checkPageAccess(user, 'main');
 
-  if (access.reason === 'blocked_ip' || access.reason === 'blocked_account') {
+  if (access.reason === 'ip_unresolved' || access.reason === 'blocked_ip' || access.reason === 'blocked_account') {
     window.location.href = 'index.html';
     return;
   }

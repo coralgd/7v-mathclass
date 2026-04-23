@@ -14,7 +14,7 @@ const getClientIp = async () => {
   if (cachedIp) return cachedIp;
 
   try {
-    const resp = await fetch('https://api.ipify.org?format=json');
+    const resp = await fetch('https://api.ipify.org?format=json', { cache: 'no-store' });
     const data = await resp.json();
     cachedIp = data.ip || 'unknown';
     return cachedIp;
@@ -25,13 +25,15 @@ const getClientIp = async () => {
 };
 
 const isIpBlocked = async (ip) => {
-  if (!ip || ip === 'unknown') return false;
+  // Fail-closed: если IP не удалось определить, доступ не выдаём.
+  if (!ip || ip === 'unknown') return true;
 
   try {
     const snap = await getDoc(doc(db, 'blocked_ips', ip));
     return snap.exists() && snap.data().blocked === true;
   } catch {
-    return false;
+    // Fail-closed: при ошибке чтения считаем IP небезопасным.
+    return true;
   }
 };
 
@@ -49,6 +51,10 @@ const getUserState = async (uid) => {
 const checkPageAccess = async (user, page = 'index') => {
   const policy = PAGE_RULES[page] || {};
   const ip = await getClientIp();
+
+  if (!ip || ip === 'unknown') {
+    return { ok: false, reason: 'ip_unresolved', ip: 'unknown', page };
+  }
 
   if (await isIpBlocked(ip)) {
     return { ok: false, reason: 'blocked_ip', ip, page };

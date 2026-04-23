@@ -327,7 +327,7 @@ goMainDeniedBtn.addEventListener('click', () => {
 onAuthStateChanged(auth, async (user) => {
   const access = await checkPageAccess(user, 'elder');
 
-  if (access.reason === 'blocked_ip' || access.reason === 'blocked_account') {
+  if (access.reason === 'ip_unresolved' || access.reason === 'blocked_ip' || access.reason === 'blocked_account') {
     window.location.href = 'index.html';
     return;
   }

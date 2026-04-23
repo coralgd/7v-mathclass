@@ -90,8 +90,8 @@ const routeAfterLogin = (userData) => {
 const validateAccessAfterLogin = async (user) => {
   const access = await checkPageAccess(user, 'index');
 
-  if (access.reason === 'blocked_ip' || access.reason === 'blocked_account') {
-    await createAuditRecord(access.reason === 'blocked_ip' ? 'login_blocked_forever_ip' : 'login_blocked_forever_account', {
+  if (access.reason === 'ip_unresolved' || access.reason === 'blocked_ip' || access.reason === 'blocked_account') {
+    await createAuditRecord(access.reason === 'blocked_account' ? 'login_blocked_forever_account' : 'login_blocked_forever_ip', {
       actorId: user.uid,
       actorEmail: user.email || null,
       targetId: user.uid,
@@ -113,6 +113,12 @@ const authFlow = async (action, progressText, isRegistration) => {
 
   const creds = getCredentials();
   if (!creds) return;
+
+  const preAccess = await checkPageAccess(null, 'index');
+  if (preAccess.reason === 'blocked_ip' || preAccess.reason === 'ip_unresolved') {
+    lockForever();
+    return;
+  }
 
   try {
     showStatus(progressText);
@@ -146,7 +152,7 @@ const boot = async () => {
   clientIp = await getClientIp();
 
   const guestAccess = await checkPageAccess(null, 'index');
-  if (guestAccess.reason === 'blocked_ip') {
+  if (guestAccess.reason === 'blocked_ip' || guestAccess.reason === 'ip_unresolved') {
     await createAuditRecord('visit_blocked_forever_ip', {
       targetIp: clientIp,
       details: 'blocked on site open',
