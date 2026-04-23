@@ -1,8 +1,9 @@
-import { auth, db, onAuthStateChanged, doc, getDoc, setDoc, onSnapshot } from './firebase.js';
+import { auth, db, onAuthStateChanged, signOut, doc, getDoc, setDoc, onSnapshot } from './firebase.js';
 import { checkPageAccess } from './auth-guard.js';
 
 const nameInput = document.getElementById('name');
 const submitBtn = document.getElementById('submitNameBtn');
+const logoutBtn = document.getElementById('logoutBtn');
 const statusEl = document.getElementById('status');
 
 let locked = false;
@@ -46,10 +47,15 @@ const ensureUserDoc = async (userRef, email) => {
   );
 };
 
-onAuthStateChanged(auth, async (user) => {
-  const access = await checkPageAccess(user, { allowUnverifiedOnly: true });
+logoutBtn.addEventListener('click', async () => {
+  await signOut(auth);
+  window.location.href = 'index.html';
+});
 
-  if (access.reason === 'blocked_ip' || access.reason === 'blocked_account') {
+onAuthStateChanged(auth, async (user) => {
+  const access = await checkPageAccess(user, 'name');
+
+  if (access.reason === 'ip_unresolved' || access.reason === 'blocked_ip' || access.reason === 'blocked_account') {
     window.location.href = 'index.html';
     return;
   }
@@ -90,6 +96,13 @@ onAuthStateChanged(auth, async (user) => {
 
   submitBtn.addEventListener('click', async () => {
     if (locked) return;
+
+    const liveAccess = await checkPageAccess(auth.currentUser, 'name');
+    if (!liveAccess.ok) {
+      await signOut(auth);
+      window.location.href = 'index.html';
+      return;
+    }
 
     const name = nameInput.value.trim();
     if (!name) {

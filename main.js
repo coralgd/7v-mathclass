@@ -1,10 +1,11 @@
-import { auth, onAuthStateChanged } from './firebase.js';
+import { auth, onAuthStateChanged, signOut } from './firebase.js';
 import { checkPageAccess } from './auth-guard.js';
 
 const allowedBlock = document.getElementById('allowedBlock');
 const blockedBlock = document.getElementById('blockedBlock');
 const welcome = document.getElementById('welcome');
 const checkModBtn = document.getElementById('checkModBtn');
+const logoutBtn = document.getElementById('logoutBtn');
 const modStatus = document.getElementById('modStatus');
 const goIndexBtn = document.getElementById('goIndexBtn');
 
@@ -34,7 +35,19 @@ goIndexBtn.addEventListener('click', () => {
   window.location.href = 'index.html';
 });
 
-checkModBtn.addEventListener('click', () => {
+logoutBtn.addEventListener('click', async () => {
+  await signOut(auth);
+  window.location.href = 'index.html';
+});
+
+checkModBtn.addEventListener('click', async () => {
+  const liveAccess = await checkPageAccess(auth.currentUser, 'main');
+  if (!liveAccess.ok) {
+    await signOut(auth);
+    window.location.href = 'index.html';
+    return;
+  }
+
   if (!isModerator(role)) {
     showModStatus('У вас нет прав модератора.', true);
     return;
@@ -44,9 +57,9 @@ checkModBtn.addEventListener('click', () => {
 });
 
 onAuthStateChanged(auth, async (user) => {
-  const access = await checkPageAccess(user, { requireVerified: true });
+  const access = await checkPageAccess(user, 'main');
 
-  if (access.reason === 'blocked_ip' || access.reason === 'blocked_account') {
+  if (access.reason === 'ip_unresolved' || access.reason === 'blocked_ip' || access.reason === 'blocked_account') {
     window.location.href = 'index.html';
     return;
   }

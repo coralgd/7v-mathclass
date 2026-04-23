@@ -2,11 +2,19 @@ import { db, doc, getDoc } from './firebase.js';
 
 let cachedIp = null;
 
+const PAGE_RULES = {
+  index: {},
+  main: { requireVerified: true },
+  name: { allowUnverifiedOnly: true },
+  moderator: { requireVerified: true, allowedRoles: ['moderator', 'elder'] },
+  elder: { requireVerified: true, allowedRoles: ['elder'] },
+};
+
 const getClientIp = async () => {
   if (cachedIp) return cachedIp;
 
   try {
-    const resp = await fetch('https://api.ipify.org?format=json');
+    const resp = await fetch('https://api.ipify.org?format=json', { cache: 'no-store' });
     const data = await resp.json();
     cachedIp = data.ip || 'unknown';
     return cachedIp;
@@ -17,13 +25,15 @@ const getClientIp = async () => {
 };
 
 const isIpBlocked = async (ip) => {
-  if (!ip || ip === 'unknown') return false;
+  // Fail-closed: если IP не удалось определить, доступ не выдаём.
+  if (!ip || ip === 'unknown') return true;
 
   try {
     const snap = await getDoc(doc(db, 'blocked_ips', ip));
     return snap.exists() && snap.data().blocked === true;
   } catch {
-    return false;
+    // Fail-closed: при ошибке чтения считаем IP небезопасным.
+    return true;
   }
 };
 
@@ -38,49 +48,47 @@ const getUserState = async (uid) => {
   }
 };
 
-const checkPageAccess = async (
-  user,
-  {
-    requireVerified = false,
-    allowedRoles = null,
-    allowUnverifiedOnly = false,
-  } = {},
-) => {
+const checkPageAccess = async (user, page = 'index') => {
+  const policy = PAGE_RULES[page] || {};
   const ip = await getClientIp();
 
+  if (!ip || ip === 'unknown') {
+    return { ok: false, reason: 'ip_unresolved', ip: 'unknown', page };
+  }
+
   if (await isIpBlocked(ip)) {
-    return { ok: false, reason: 'blocked_ip', ip };
+    return { ok: false, reason: 'blocked_ip', ip, page };
   }
 
   if (!user) {
-    return { ok: false, reason: 'no_auth', ip };
+    return { ok: false, reason: 'no_auth', ip, page };
   }
 
   const { exists, data } = await getUserState(user.uid);
   if (!exists) {
-    return { ok: false, reason: 'no_profile', ip };
+    return { ok: false, reason: 'no_profile', ip, page };
   }
 
   if (data.blockedForever) {
-    return { ok: false, reason: 'blocked_account', ip, userData: data };
+    return { ok: false, reason: 'blocked_account', ip, page, userData: data };
   }
 
-  if (allowUnverifiedOnly && data.verified) {
-    return { ok: false, reason: 'already_verified', ip, userData: data };
+  if (policy.allowUnverifiedOnly && data.verified) {
+    return { ok: false, reason: 'already_verified', ip, page, userData: data };
   }
 
-  if (requireVerified && !data.verified) {
-    return { ok: false, reason: 'need_verification', ip, userData: data };
+  if (policy.requireVerified && !data.verified) {
+    return { ok: false, reason: 'need_verification', ip, page, userData: data };
   }
 
-  if (Array.isArray(allowedRoles) && allowedRoles.length) {
+  if (Array.isArray(policy.allowedRoles) && policy.allowedRoles.length) {
     const role = data.role || 'user';
-    if (!allowedRoles.includes(role)) {
-      return { ok: false, reason: 'role_denied', ip, userData: data };
+    if (!policy.allowedRoles.includes(role)) {
+      return { ok: false, reason: 'role_denied', ip, page, userData: data };
     }
   }
 
-  return { ok: true, ip, userData: data };
+  return { ok: true, ip, page, userData: data };
 };
 
 const redirectByRole = (role) => {

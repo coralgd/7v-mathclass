@@ -136,9 +136,9 @@ const fillList = (target, items) => {
 };
 
 onAuthStateChanged(auth, async (user) => {
-  const access = await checkPageAccess(user, { requireVerified: true, allowedRoles: ['moderator'] });
+  const access = await checkPageAccess(user, 'moderator');
 
-  if (access.reason === 'blocked_ip' || access.reason === 'blocked_account') {
+  if (access.reason === 'ip_unresolved' || access.reason === 'blocked_ip' || access.reason === 'blocked_account') {
     window.location.href = 'index.html';
     return;
   }
