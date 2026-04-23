@@ -3,7 +3,6 @@ import {
   db,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
-  onAuthStateChanged,
   signOut,
   doc,
   setDoc,
@@ -156,21 +155,7 @@ const boot = async () => {
     return;
   }
 
-  onAuthStateChanged(auth, async (user) => {
-    if (!user || accessLockedForever) return;
-
-    const access = await checkPageAccess(user, 'index');
-
-    if (access.reason === 'blocked_ip' || access.reason === 'blocked_account') {
-      await signOut(auth);
-      lockForever();
-      return;
-    }
-
-    if (!access.ok) return;
-
-    window.location.href = routeAfterLogin(access.userData);
-  });
+  // На странице входа не делаем автоматический редирект без явного действия по кнопке.
 
   registerBtn.addEventListener('click', () => authFlow(createUserWithEmailAndPassword, 'Регистрируем...', true));
   loginBtn.addEventListener('click', () => authFlow(signInWithEmailAndPassword, 'Входим...', false));

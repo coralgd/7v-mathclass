@@ -1,8 +1,9 @@
-import { auth, db, onAuthStateChanged, doc, getDoc, setDoc, onSnapshot } from './firebase.js';
+import { auth, db, onAuthStateChanged, signOut, doc, getDoc, setDoc, onSnapshot } from './firebase.js';
 import { checkPageAccess } from './auth-guard.js';
 
 const nameInput = document.getElementById('name');
 const submitBtn = document.getElementById('submitNameBtn');
+const logoutBtn = document.getElementById('logoutBtn');
 const statusEl = document.getElementById('status');
 
 let locked = false;
@@ -45,6 +46,11 @@ const ensureUserDoc = async (userRef, email) => {
     { merge: true },
   );
 };
+
+logoutBtn.addEventListener('click', async () => {
+  await signOut(auth);
+  window.location.href = 'index.html';
+});
 
 onAuthStateChanged(auth, async (user) => {
   const access = await checkPageAccess(user, 'name');

@@ -1,10 +1,11 @@
-import { auth, onAuthStateChanged } from './firebase.js';
+import { auth, onAuthStateChanged, signOut } from './firebase.js';
 import { checkPageAccess } from './auth-guard.js';
 
 const allowedBlock = document.getElementById('allowedBlock');
 const blockedBlock = document.getElementById('blockedBlock');
 const welcome = document.getElementById('welcome');
 const checkModBtn = document.getElementById('checkModBtn');
+const logoutBtn = document.getElementById('logoutBtn');
 const modStatus = document.getElementById('modStatus');
 const goIndexBtn = document.getElementById('goIndexBtn');
 
@@ -31,6 +32,11 @@ const showModStatus = (text, isError = false) => {
 const isModerator = (value) => value === 'moderator' || value === 'elder';
 
 goIndexBtn.addEventListener('click', () => {
+  window.location.href = 'index.html';
+});
+
+logoutBtn.addEventListener('click', async () => {
+  await signOut(auth);
   window.location.href = 'index.html';
 });
 
