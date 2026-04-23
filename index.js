@@ -3,9 +3,9 @@ import {
   db,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
+  onAuthStateChanged,
   signOut,
   doc,
-  getDoc,
   setDoc,
   collection,
 } from './firebase.js';
