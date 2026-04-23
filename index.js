@@ -63,7 +63,6 @@ const getCredentials = () => {
 
 const ensureUserDoc = async (user, email, ip, isRegistration) => {
   const ref = doc(db, 'users', user.uid);
-  const snap = await getDoc(ref);
 
   const update = {
     email,
@@ -71,7 +70,8 @@ const ensureUserDoc = async (user, email, ip, isRegistration) => {
     updatedAt: new Date().toISOString(),
   };
 
-  if (!snap.exists()) {
+  if (isRegistration) {
+    // Дефолты только при регистрации, чтобы не сбрасывать роль/верификацию на входе.
     update.role = 'user';
     update.name = null;
     update.nameSubmitted = false;
