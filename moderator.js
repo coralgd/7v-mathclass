@@ -3,13 +3,13 @@ import {
   db,
   onAuthStateChanged,
   doc,
-  getDoc,
   setDoc,
   collection,
   query,
   onSnapshot,
   updateDoc,
 } from './firebase.js';
+import { checkPageAccess } from './auth-guard.js';
 
 const modStatus = document.getElementById('modStatus');
 const unverifiedList = document.getElementById('unverifiedList');
@@ -136,29 +136,41 @@ const fillList = (target, items) => {
 };
 
 onAuthStateChanged(auth, async (user) => {
-  if (!user) {
+  const access = await checkPageAccess(user, { requireVerified: true, allowedRoles: ['moderator'] });
+
+  if (access.reason === 'blocked_ip' || access.reason === 'blocked_account') {
     window.location.href = 'index.html';
+    return;
+  }
+
+  if (access.reason === 'no_auth' || access.reason === 'no_profile') {
+    window.location.href = 'index.html';
+    return;
+  }
+
+  if (access.reason === 'need_verification') {
+    showDenied('Нет доступа: аккаунт не верифицирован.');
+    return;
+  }
+
+  if (access.reason === 'role_denied') {
+    const role = access.userData?.role || 'user';
+    showDenied(`Нет доступа. Ваша роль: ${role}.`);
+    return;
+  }
+
+  if (!access.ok) {
+    showDenied('Ошибка доступа.');
     return;
   }
 
   try {
     viewerId = user.uid;
     viewerEmail = user.email || null;
-    const meSnap = await getDoc(doc(db, 'users', user.uid));
-    if (!meSnap.exists()) {
-      showDenied('Профиль не найден.');
-      return;
-    }
-
-    const role = meSnap.data().role || 'user';
-    if (role !== 'moderator') {
-      showDenied(`Нет доступа. Ваша роль: ${role}.`);
-      return;
-    }
 
     showPanel();
     activateTab('unverified');
-    setStatus('Роль подтверждена: moderator.');
+    setStatus('Доступ подтверждён: moderator.');
 
     const q = query(collection(db, 'users'));
     onSnapshot(

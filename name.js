@@ -1,4 +1,5 @@
 import { auth, db, onAuthStateChanged, doc, getDoc, setDoc, onSnapshot } from './firebase.js';
+import { checkPageAccess } from './auth-guard.js';
 
 const nameInput = document.getElementById('name');
 const submitBtn = document.getElementById('submitNameBtn');
@@ -46,7 +47,24 @@ const ensureUserDoc = async (userRef, email) => {
 };
 
 onAuthStateChanged(auth, async (user) => {
-  if (!user) {
+  const access = await checkPageAccess(user, { allowUnverifiedOnly: true });
+
+  if (access.reason === 'blocked_ip' || access.reason === 'blocked_account') {
+    window.location.href = 'index.html';
+    return;
+  }
+
+  if (access.reason === 'no_auth' || access.reason === 'no_profile') {
+    window.location.href = 'index.html';
+    return;
+  }
+
+  if (access.reason === 'already_verified') {
+    window.location.href = 'main.html';
+    return;
+  }
+
+  if (!access.ok) {
     window.location.href = 'index.html';
     return;
   }
