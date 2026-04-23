@@ -16,7 +16,7 @@
         <div class="head-row">
           <div>
             <h1>Панель модератора</h1>
-            <p class="sub">Управление отправками и верификацией</p>
+            <p class="sub">Списки игроков и моментальная проверка профиля</p>
           </div>
           <button id="goMainBtn" type="button" class="ghost">На главную</button>
         </div>
@@ -29,11 +29,11 @@
         </div>
 
         <section id="unverifiedSection">
-          <ul id="unverifiedList" class="list"></ul>
+          <ul id="unverifiedList" class="list row-list"></ul>
         </section>
 
         <section id="verifiedSection" class="hidden">
-          <ul id="verifiedList" class="list"></ul>
+          <ul id="verifiedList" class="list row-list"></ul>
         </section>
       </section>
 
@@ -46,6 +46,19 @@
         <button id="goMainDeniedBtn" type="button" class="ghost">На главную</button>
       </section>
     </main>
+
+    <section id="modUserModal" class="modal hidden">
+      <div class="modal-card">
+        <div class="modal-head">
+          <h2 id="modModalName">Профиль игрока</h2>
+          <button id="modModalClose" type="button" class="ghost slim">Закрыть</button>
+        </div>
+        <div id="modModalInfo" class="modal-info"></div>
+        <div class="modal-actions">
+          <button id="modVerifyToggleBtn" type="button">Снять / поставить верификацию</button>
+        </div>
+      </div>
+    </section>
 
     <script type="module" src="moderator.js"></script>
   </body>
