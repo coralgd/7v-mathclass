@@ -63,20 +63,28 @@ const getCredentials = () => {
 
 const ensureUserDoc = async (user, email, ip, isRegistration) => {
   const ref = doc(db, 'users', user.uid);
+  const snap = await getDoc(ref);
+
   const update = {
     email,
-    role: 'user',
-    name: null,
-    nameSubmitted: false,
-    verified: false,
-    blockedForever: false,
     lastIp: ip,
     updatedAt: new Date().toISOString(),
   };
 
-  if (isRegistration) {
+  if (!snap.exists()) {
+    update.role = 'user';
+    update.name = null;
+    update.nameSubmitted = false;
+    update.verified = false;
+    update.blockedForever = false;
     update.createdIp = ip;
     update.createdAt = new Date().toISOString();
+  } else if (isRegistration) {
+    // Если это повторный вызов регистрации для существующего профиля,
+    // не перезаписываем роль/верификацию, только фиксируем исходный IP если отсутствует.
+    const data = snap.data();
+    if (!data.createdIp) update.createdIp = ip;
+    if (!data.createdAt) update.createdAt = new Date().toISOString();
   }
 
   await setDoc(ref, update, { merge: true });

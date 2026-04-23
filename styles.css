@@ -438,3 +438,8 @@ button.slim {
 .audit-row p {
   margin: 0 0 5px;
 }
+
+
+.modal.hidden {
+  display: none !important;
+}

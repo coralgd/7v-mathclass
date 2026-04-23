@@ -29,7 +29,12 @@ const auditList = document.getElementById('auditList');
 const metricTotal = document.getElementById('metricTotal');
 const metricBanned = document.getElementById('metricBanned');
 const metricRiskIps = document.getElementById('metricRiskIps');
-const riskIpList = document.getElementById('riskIpList');
+const openPreventionBtn = document.getElementById('openPreventionBtn');
+const preventionModal = document.getElementById('preventionModal');
+const closePreventionBtn = document.getElementById('closePreventionBtn');
+const preventionIpSearch = document.getElementById('preventionIpSearch');
+const preventionUserSearch = document.getElementById('preventionUserSearch');
+const preventionList = document.getElementById('preventionList');
 
 const elderUserModal = document.getElementById('elderUserModal');
 const elderModalName = document.getElementById('elderModalName');
@@ -173,42 +178,51 @@ const renderPreventionBoard = () => {
     return acc;
   }, {});
 
-  const riskIps = Object.entries(ipMap)
-    .filter(([, count]) => count > 1)
-    .sort((a, b) => b[1] - a[1]);
-
+  const riskIps = Object.entries(ipMap).filter(([, count]) => count > 1);
   metricRiskIps.textContent = String(riskIps.length);
+};
 
-  riskIpList.innerHTML = '';
-  if (!riskIps.length) {
+const renderPreventionList = () => {
+  const ipQuery = preventionIpSearch.value.trim().toLowerCase();
+  const userQuery = preventionUserSearch.value.trim().toLowerCase();
+
+  const ipMap = recordsCache.reduce((acc, record) => {
+    const ip = getRecordIp(record);
+    if (ip === 'unknown') return acc;
+    if (!acc[ip]) acc[ip] = [];
+    acc[ip].push(record);
+    return acc;
+  }, {});
+
+  const suspicious = Object.entries(ipMap)
+    .filter(([, users]) => users.length > 1)
+    .filter(([ip, users]) => {
+      const usersText = users.map((u) => `${u.name || ''} ${u.email || ''} ${u.id}`).join(' ').toLowerCase();
+      const ipOk = !ipQuery || ip.toLowerCase().includes(ipQuery);
+      const userOk = !userQuery || usersText.includes(userQuery);
+      return ipOk && userOk;
+    })
+    .sort((a, b) => b[1].length - a[1].length);
+
+  preventionList.innerHTML = '';
+  if (!suspicious.length) {
     const empty = document.createElement('li');
     empty.className = 'row-empty';
-    empty.textContent = 'Подозрительных IP пока нет.';
-    riskIpList.append(empty);
+    empty.textContent = 'Совпадений не найдено.';
+    preventionList.append(empty);
     return;
   }
 
-  riskIps.forEach(([ip, count]) => {
+  suspicious.forEach(([ip, users]) => {
     const li = document.createElement('li');
-    li.className = 'risk-item';
-
-    const text = document.createElement('span');
-    text.textContent = `${ip} — ${count} аккаунтов`;
-
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'ghost slim';
-    btn.textContent = 'Показать';
-    btn.addEventListener('click', () => {
-      const emails = recordsCache
-        .filter((r) => getRecordIp(r) === ip)
-        .map((r) => r.email || r.id)
-        .join(', ');
-      setStatus(`IP ${ip}: ${emails || 'без почт'}`);
-    });
-
-    li.append(text, btn);
-    riskIpList.append(li);
+    li.className = 'audit-row';
+    const usersText = users.map((u) => u.email || u.name || u.id).join(', ');
+    li.innerHTML = `
+      <p><strong>IP:</strong> ${ip}</p>
+      <p><strong>Аккаунтов:</strong> ${users.length}</p>
+      <p><strong>Профили:</strong> ${usersText}</p>
+    `;
+    preventionList.append(li);
   });
 };
 
@@ -253,6 +267,16 @@ const withSelected = async (callback) => {
   await callback();
 };
 
+openPreventionBtn.addEventListener('click', () => {
+  renderPreventionList();
+  preventionModal.classList.remove('hidden');
+});
+closePreventionBtn.addEventListener('click', () => preventionModal.classList.add('hidden'));
+preventionModal.addEventListener('click', (event) => {
+  if (event.target === preventionModal) preventionModal.classList.add('hidden');
+});
+preventionIpSearch.addEventListener('input', renderPreventionList);
+preventionUserSearch.addEventListener('input', renderPreventionList);
 tabUnverified.addEventListener('click', () => activateTab('unverified'));
 tabVerified.addEventListener('click', () => activateTab('verified'));
 actionSearchInput.addEventListener('input', renderAuditList);
@@ -262,6 +286,12 @@ goMainDeniedBtn.addEventListener('click', () => (window.location.href = 'main.ht
 elderModalClose.addEventListener('click', closeModal);
 elderUserModal.addEventListener('click', (event) => {
   if (event.target === elderUserModal) closeModal();
+});
+
+document.addEventListener('keydown', (event) => {
+  if (event.key !== 'Escape') return;
+  closeModal();
+  preventionModal.classList.add('hidden');
 });
 
 roleSelectTrigger.addEventListener('click', () => {

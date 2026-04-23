@@ -145,6 +145,10 @@ modUserModal.addEventListener('click', (event) => {
   if (event.target === modUserModal) closeModal();
 });
 
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape') closeModal();
+});
+
 modVerifyToggleBtn.addEventListener('click', async () => {
   if (!selectedRecord) return;
   if (!(await ensureLiveAccess())) return;

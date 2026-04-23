@@ -18,7 +18,10 @@
             <h1>Панель elder</h1>
             <p class="sub">Центр предотвращения нарушений и полный контроль аккаунтов</p>
           </div>
-          <button id="goMainBtn" type="button" class="ghost">На главную</button>
+          <div class="row">
+            <button id="openPreventionBtn" type="button" class="ghost">Меню пресечения нарушений</button>
+            <button id="goMainBtn" type="button" class="ghost">На главную</button>
+          </div>
         </div>
 
         <p id="elderStatus" class="status"></p>
@@ -38,11 +41,7 @@
           </div>
         </section>
 
-        <section class="risk-panel">
-          <h2>Меню предотвращения нарушений</h2>
-          <p class="sub">IP с несколькими аккаунтами (высокий приоритет для проверки)</p>
-          <ul id="riskIpList" class="risk-list"></ul>
-        </section>
+        
 
         <div class="tab-row">
           <button id="tabUnverified" class="tab-btn" type="button">Неверифицированные</button>
@@ -110,6 +109,22 @@
           </div>
           <button id="applyRoleBtn" type="button">Применить роль</button>
         </section>
+      </div>
+    </section>
+
+
+    <section id="preventionModal" class="modal hidden">
+      <div class="modal-card wide">
+        <div class="modal-head">
+          <h2>Меню пресечения нарушений</h2>
+          <button id="closePreventionBtn" type="button" class="ghost slim">Закрыть</button>
+        </div>
+        <p class="sub">Отдельный центр поиска и выявления подозрительных связок аккаунтов.</p>
+        <div class="archive-search">
+          <input id="preventionIpSearch" type="text" placeholder="Поиск по IP" />
+          <input id="preventionUserSearch" type="text" placeholder="Поиск по email/uid/имени" />
+        </div>
+        <ul id="preventionList" class="list audit-list"></ul>
       </div>
     </section>
 
