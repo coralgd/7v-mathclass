@@ -3,13 +3,13 @@ import {
   db,
   onAuthStateChanged,
   doc,
-  getDoc,
   setDoc,
   collection,
   query,
   onSnapshot,
   updateDoc,
 } from './firebase.js';
+import { checkPageAccess } from './auth-guard.js';
 
 const elderStatus = document.getElementById('elderStatus');
 const unverifiedList = document.getElementById('unverifiedList');
@@ -70,8 +70,6 @@ const showPanel = () => {
   elderDeniedBlock.classList.add('hidden');
   elderPanelBlock.classList.remove('hidden');
 };
-
-const isElder = (value) => value === 'elder';
 
 const getRecordIp = (record) => record.lastIp || record.createdIp || 'unknown';
 
@@ -327,29 +325,41 @@ goMainDeniedBtn.addEventListener('click', () => {
 });
 
 onAuthStateChanged(auth, async (user) => {
-  if (!user) {
+  const access = await checkPageAccess(user, { requireVerified: true, allowedRoles: ['elder'] });
+
+  if (access.reason === 'blocked_ip' || access.reason === 'blocked_account') {
     window.location.href = 'index.html';
+    return;
+  }
+
+  if (access.reason === 'no_auth' || access.reason === 'no_profile') {
+    window.location.href = 'index.html';
+    return;
+  }
+
+  if (access.reason === 'need_verification') {
+    showDenied('Нет доступа: аккаунт не верифицирован.');
+    return;
+  }
+
+  if (access.reason === 'role_denied') {
+    const role = access.userData?.role || 'user';
+    showDenied(`Нет доступа. Ваша роль: ${role}.`);
+    return;
+  }
+
+  if (!access.ok) {
+    showDenied('Ошибка доступа.');
     return;
   }
 
   try {
     viewerId = user.uid;
     viewerEmail = user.email || null;
-    const meSnap = await getDoc(doc(db, 'users', user.uid));
-    if (!meSnap.exists()) {
-      showDenied('Профиль не найден.');
-      return;
-    }
-
-    const role = meSnap.data().role || 'user';
-    if (!isElder(role)) {
-      showDenied(`Нет доступа. Ваша роль: ${role}.`);
-      return;
-    }
 
     showPanel();
     activateTab('unverified');
-    setStatus('Роль подтверждена: elder.');
+    setStatus('Доступ подтверждён: elder.');
 
     const usersQ = query(collection(db, 'users'));
     onSnapshot(

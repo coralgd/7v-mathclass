@@ -3,12 +3,13 @@ import {
   db,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
+  onAuthStateChanged,
   signOut,
   doc,
-  getDoc,
   setDoc,
   collection,
 } from './firebase.js';
+import { checkPageAccess, getClientIp, redirectByRole } from './auth-guard.js';
 
 const emailInput = document.getElementById('email');
 const passwordInput = document.getElementById('password');
@@ -50,26 +51,6 @@ const lockForever = () => {
   foreverPanel.classList.remove('hidden');
 };
 
-const getClientIp = async () => {
-  try {
-    const resp = await fetch('https://api.ipify.org?format=json');
-    const data = await resp.json();
-    return data.ip || 'unknown';
-  } catch {
-    return 'unknown';
-  }
-};
-
-const isIpBlocked = async (ip) => {
-  if (!ip || ip === 'unknown') return false;
-  try {
-    const snap = await getDoc(doc(db, 'blocked_ips', ip));
-    return snap.exists() && snap.data().blocked === true;
-  } catch {
-    return false;
-  }
-};
-
 const getCredentials = () => {
   const email = emailInput.value.trim();
   const password = passwordInput.value.trim();
@@ -102,44 +83,30 @@ const ensureUserDoc = async (user, email, ip, isRegistration) => {
   return ref;
 };
 
-const nextPage = async (userRef) => {
-  const snap = await getDoc(userRef);
-  if (!snap.exists()) return 'name.html';
-  return snap.data().verified ? 'main.html' : 'name.html';
+const routeAfterLogin = (userData) => {
+  if (!userData?.verified) return 'name.html';
+  return redirectByRole(userData.role || 'user');
 };
 
-const validateBanAfterLogin = async (userRef) => {
-  const snap = await getDoc(userRef);
-  if (!snap.exists()) return false;
+const validateAccessAfterLogin = async (user) => {
+  const access = await checkPageAccess(user);
 
-  const data = snap.data();
-  if (data.blockedForever) {
-    await createAuditRecord('login_blocked_forever_account', {
-      actorId: snap.id,
-      actorEmail: data.email,
-      targetId: snap.id,
-      targetEmail: data.email,
-      targetIp: data.lastIp || clientIp,
+  if (access.reason === 'blocked_ip' || access.reason === 'blocked_account') {
+    await createAuditRecord(access.reason === 'blocked_ip' ? 'login_blocked_forever_ip' : 'login_blocked_forever_account', {
+      actorId: user.uid,
+      actorEmail: user.email || null,
+      targetId: user.uid,
+      targetEmail: user.email || null,
+      targetIp: access.ip,
     });
     await signOut(auth);
     lockForever();
-    return true;
+    return null;
   }
 
-  if (await isIpBlocked(data.lastIp || clientIp)) {
-    await createAuditRecord('login_blocked_forever_ip', {
-      actorId: snap.id,
-      actorEmail: data.email,
-      targetId: snap.id,
-      targetEmail: data.email,
-      targetIp: data.lastIp || clientIp,
-    });
-    await signOut(auth);
-    lockForever();
-    return true;
-  }
+  if (!access.ok) return null;
 
-  return false;
+  return access.userData;
 };
 
 const authFlow = async (action, progressText, isRegistration) => {
@@ -151,9 +118,10 @@ const authFlow = async (action, progressText, isRegistration) => {
   try {
     showStatus(progressText);
     const result = await action(auth, creds.email, creds.password);
-    const userRef = await ensureUserDoc(result.user, creds.email, clientIp, isRegistration);
+    await ensureUserDoc(result.user, creds.email, clientIp, isRegistration);
 
-    if (await validateBanAfterLogin(userRef)) return;
+    const userData = await validateAccessAfterLogin(result.user);
+    if (!userData) return;
 
     await createAuditRecord(isRegistration ? 'register_success' : 'login_success', {
       actorId: result.user.uid,
@@ -163,7 +131,7 @@ const authFlow = async (action, progressText, isRegistration) => {
       targetIp: clientIp,
     });
 
-    window.location.href = await nextPage(userRef);
+    window.location.href = routeAfterLogin(userData);
   } catch (error) {
     await createAuditRecord(isRegistration ? 'register_failed' : 'login_failed', {
       actorEmail: creds.email,
@@ -177,7 +145,9 @@ const authFlow = async (action, progressText, isRegistration) => {
 
 const boot = async () => {
   clientIp = await getClientIp();
-  if (await isIpBlocked(clientIp)) {
+
+  const guestAccess = await checkPageAccess(null);
+  if (guestAccess.reason === 'blocked_ip') {
     await createAuditRecord('visit_blocked_forever_ip', {
       targetIp: clientIp,
       details: 'blocked on site open',
@@ -185,6 +155,22 @@ const boot = async () => {
     lockForever();
     return;
   }
+
+  onAuthStateChanged(auth, async (user) => {
+    if (!user || accessLockedForever) return;
+
+    const access = await checkPageAccess(user);
+
+    if (access.reason === 'blocked_ip' || access.reason === 'blocked_account') {
+      await signOut(auth);
+      lockForever();
+      return;
+    }
+
+    if (!access.ok) return;
+
+    window.location.href = routeAfterLogin(access.userData);
+  });
 
   registerBtn.addEventListener('click', () => authFlow(createUserWithEmailAndPassword, 'Регистрируем...', true));
   loginBtn.addEventListener('click', () => authFlow(signInWithEmailAndPassword, 'Входим...', false));
