@@ -3,6 +3,7 @@ import {
   db,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
+  onAuthStateChanged,
   signOut,
   doc,
   setDoc,
