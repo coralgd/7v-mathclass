@@ -16,12 +16,33 @@
         <div class="head-row">
           <div>
             <h1>Панель elder</h1>
-            <p class="sub">Управление отправками, верификацией, ролями и архивом действий</p>
+            <p class="sub">Центр предотвращения нарушений и полный контроль аккаунтов</p>
           </div>
           <button id="goMainBtn" type="button" class="ghost">На главную</button>
         </div>
 
         <p id="elderStatus" class="status"></p>
+
+        <section class="prevention-board">
+          <div class="metric-card">
+            <span class="metric-title">Всего аккаунтов</span>
+            <strong id="metricTotal">0</strong>
+          </div>
+          <div class="metric-card">
+            <span class="metric-title">Пожизненно заблокированы</span>
+            <strong id="metricBanned">0</strong>
+          </div>
+          <div class="metric-card">
+            <span class="metric-title">Подозрительные IP</span>
+            <strong id="metricRiskIps">0</strong>
+          </div>
+        </section>
+
+        <section class="risk-panel">
+          <h2>Меню предотвращения нарушений</h2>
+          <p class="sub">IP с несколькими аккаунтами (высокий приоритет для проверки)</p>
+          <ul id="riskIpList" class="risk-list"></ul>
+        </section>
 
         <div class="tab-row">
           <button id="tabUnverified" class="tab-btn" type="button">Неверифицированные</button>
@@ -29,21 +50,21 @@
         </div>
 
         <section id="unverifiedSection">
-          <ul id="unverifiedList" class="list"></ul>
+          <ul id="unverifiedList" class="list row-list"></ul>
         </section>
 
         <section id="verifiedSection" class="hidden">
-          <ul id="verifiedList" class="list"></ul>
+          <ul id="verifiedList" class="list row-list"></ul>
         </section>
 
         <section class="archive-panel">
-          <h2>Архив действий</h2>
-          <p class="sub">Поиск по действию или по пользователю</p>
+          <h2>Журнал действий</h2>
+          <p class="sub">Удобный поиск и сортировка по действиям / пользователям</p>
           <div class="archive-search">
             <input id="actionSearch" type="text" placeholder="Поиск по действию (пример: verify_user)" />
-            <input id="userSearch" type="text" placeholder="Поиск по пользователю (email/uid)" />
+            <input id="userSearch" type="text" placeholder="Поиск по пользователю (email/uid/ip)" />
           </div>
-          <ul id="auditList" class="list"></ul>
+          <ul id="auditList" class="list audit-list"></ul>
         </section>
       </section>
 
@@ -56,6 +77,41 @@
         <button id="goMainDeniedBtn" type="button" class="ghost">На главную</button>
       </section>
     </main>
+
+    <section id="elderUserModal" class="modal hidden">
+      <div class="modal-card wide">
+        <div class="modal-head">
+          <h2 id="elderModalName">Профиль игрока</h2>
+          <button id="elderModalClose" type="button" class="ghost slim">Закрыть</button>
+        </div>
+
+        <div id="elderModalInfo" class="modal-info"></div>
+
+        <section class="modal-prevention">
+          <h3>Инструменты пресечения нарушений</h3>
+          <div class="modal-actions grid-2">
+            <button id="elderVerifyToggleBtn" type="button">Снять / поставить верификацию</button>
+            <button id="elderBanAccountBtn" type="button" class="danger">Заблокировать аккаунт</button>
+            <button id="elderBlockIpBtn" type="button" class="danger">Заблокировать IP</button>
+            <button id="elderFindIpAccountsBtn" type="button" class="ghost">Показать все аккаунты IP</button>
+            <button id="elderBanAllByIpBtn" type="button" class="danger">Блокировать все аккаунты IP</button>
+          </div>
+        </section>
+
+        <section class="role-custom-select">
+          <h3>Назначение роли</h3>
+          <div class="custom-select" id="roleSelectWrap">
+            <button id="roleSelectTrigger" type="button" class="ghost">Выбери роль</button>
+            <div id="roleSelectMenu" class="custom-select-menu hidden">
+              <button type="button" class="role-option" data-role="user">user</button>
+              <button type="button" class="role-option" data-role="moderator">moderator</button>
+              <button type="button" class="role-option" data-role="elder">elder</button>
+            </div>
+          </div>
+          <button id="applyRoleBtn" type="button">Применить роль</button>
+        </section>
+      </div>
+    </section>
 
     <script type="module" src="elder.js"></script>
   </body>
